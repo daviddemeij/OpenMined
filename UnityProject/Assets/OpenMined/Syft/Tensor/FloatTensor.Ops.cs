@@ -1077,7 +1077,7 @@ namespace OpenMined.Syft.Tensor
             {
                 result.Data[i] = UnityEngine.Random.value;
             }
-            return result.View(dims, inline:inline);
+            return result;
         }
         public FloatTensor Reciprocal(bool inline = false)
         {
