@@ -585,16 +585,6 @@ namespace OpenMined.Syft.Tensor
                     var result = Random(shape, inline: true);
                     return result.Id.ToString();
                 }
-                case "random":
-                {
-                    int[] dims = new int[msgObj.tensorIndexParams.Length];
-                    for (int i = 0; i < msgObj.tensorIndexParams.Length; i++)
-                    {
-                        dims[i] = int.Parse(msgObj.tensorIndexParams[i]);
-                    }
-                    var result = Random(dims, inline: true);
-                    return result.Id.ToString();
-                }
                 case "reciprocal":
                 {
                     var result = Reciprocal();
