@@ -1058,8 +1058,28 @@ namespace OpenMined.Syft.Tensor
             
             // TODO: Implement GPU op. with GPU tests.
             return Reduce(dim, keepdim, (acc, val, index, arr) => acc * val, (val, len) => val, creation_op:"prod_"+dim);
-        }        
-        
+        }
+
+        public FloatTensor Random(int[] dims, bool inline = true)
+        {
+            FloatTensor result;
+            int[] dims_prod = {1};
+            foreach (int dim in dims)
+            {
+                dims_prod[0] *= dim;
+            }
+
+            if (dataOnGpu)
+            {
+                throw new NotImplementedException();
+            }
+            result = factory.ctrl.floatTensorFactory.Create(dims_prod);
+            for (int i = 0; i < dims_prod[0]; i++)
+            {
+                result.Data[i] = UnityEngine.Random.value;
+            }
+            return result.View(dims, inline:inline);
+        }
         public FloatTensor Reciprocal(bool inline = false)
         {
             var result = inline ? this : this.emptyTensorCopy();
