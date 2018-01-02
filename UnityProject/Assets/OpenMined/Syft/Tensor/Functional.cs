@@ -1,5 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+
+
+using System.Collections;
+using System.Linq;
+using UnityEngine;
 using OpenMined.Syft.Tensor.Factories;
 
 namespace OpenMined.Syft.Tensor
@@ -106,6 +111,34 @@ namespace OpenMined.Syft.Tensor
 
             }
             return result;            
+        }
+        public static FloatTensor Ones(FloatTensorFactory factory, int[] dims)
+        {
+            FloatTensor result = factory.ctrl.floatTensorFactory.Create(dims);
+            result.Add(1.0F, inline: true);
+            return result;
+        }
+        public static FloatTensor Random(FloatTensorFactory factory, int[] dims)
+        {
+            int dims_prod = 1;
+            foreach (int dim in dims)
+            {
+                dims_prod *= dim;
+            }
+            Debug.LogFormat("<color=green>Dims Product {0}</color>", dims_prod);
+
+
+            FloatTensor result = factory.ctrl.floatTensorFactory.Create(dims);
+            for (int i = 0; i < dims_prod; i++)
+            {
+                result.Data[i] = UnityEngine.Random.value;
+            }
+            return result.View(dims);
+        }
+        public static FloatTensor Zeros(FloatTensorFactory factory, int[] dims)
+        {
+            FloatTensor result = factory.ctrl.floatTensorFactory.Create(dims);
+            return result;
         }
     }
 }

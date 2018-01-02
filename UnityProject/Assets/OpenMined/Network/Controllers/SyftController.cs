@@ -256,6 +256,37 @@ namespace OpenMined.Network.Controllers
 							FloatTensor result = Functional.Concatenate(floatTensorFactory, tensor_ids, int.Parse(msgObj.tensorIndexParams[0]));
 							return result.Id.ToString();
 						}
+						else if (msgObj.functionCall == "ones")
+						{
+						    int[] dims = new int[msgObj.tensorIndexParams.Length];
+							for (int i = 0; i < msgObj.tensorIndexParams.Length; i++)
+							{
+								dims[i] = int.Parse(msgObj.tensorIndexParams[i]);
+							}
+							FloatTensor result = Functional.Ones(floatTensorFactory, dims);
+							return result.Id.ToString();
+						}
+						else if (msgObj.functionCall == "random")
+						{
+						    int[] dims = new int[msgObj.tensorIndexParams.Length];
+							for (int i = 0; i < msgObj.tensorIndexParams.Length; i++)
+							{
+								dims[i] = int.Parse(msgObj.tensorIndexParams[i]);
+							}
+							FloatTensor result = Functional.Random(floatTensorFactory, dims);
+							return result.Id.ToString();
+						}
+						else if (msgObj.functionCall == "zeros")
+						{
+						    int[] dims = new int[msgObj.tensorIndexParams.Length];
+							for (int i = 0; i < msgObj.tensorIndexParams.Length; i++)
+							{
+								dims[i] = int.Parse(msgObj.tensorIndexParams[i]);
+							}
+							Debug.LogFormat("<color=green>Dims {0}</color>", dims);
+							FloatTensor result = Functional.Zeros(floatTensorFactory, dims);
+							return result.Id.ToString();
+						}
 						return "Unity Error: SyftController.processMessage: Command not found:" + msgObj.objectType + ":" + msgObj.functionCall;
 					}
 						
