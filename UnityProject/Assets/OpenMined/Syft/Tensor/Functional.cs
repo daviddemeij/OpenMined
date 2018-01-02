@@ -1,10 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-
-
-using System.Collections;
-using System.Linq;
-using UnityEngine;
 using OpenMined.Syft.Tensor.Factories;
 
 namespace OpenMined.Syft.Tensor
@@ -27,7 +22,7 @@ namespace OpenMined.Syft.Tensor
             int num_new_rows = 0;
 
             List<IntTensor> int_tensors_for_index_add = new List<IntTensor>();
-            
+
             int[] first_indices = new int[first.Shape[axis]];
             for (int i = 0; i < first.Shape[axis]; i++) first_indices[i] = i + num_new_rows;
             int_tensors_for_index_add.Add(factory.ctrl.intTensorFactory.Create(_shape: new int[1] {first.Shape[axis]},_data:first_indices));
@@ -125,9 +120,6 @@ namespace OpenMined.Syft.Tensor
             {
                 dims_prod *= dim;
             }
-            Debug.LogFormat("<color=green>Dims Product {0}</color>", dims_prod);
-
-
             FloatTensor result = factory.ctrl.floatTensorFactory.Create(dims);
             for (int i = 0; i < dims_prod; i++)
             {

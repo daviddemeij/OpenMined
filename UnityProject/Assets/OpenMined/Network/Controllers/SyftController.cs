@@ -283,7 +283,6 @@ namespace OpenMined.Network.Controllers
 							{
 								dims[i] = int.Parse(msgObj.tensorIndexParams[i]);
 							}
-							Debug.LogFormat("<color=green>Dims {0}</color>", dims);
 							FloatTensor result = Functional.Zeros(floatTensorFactory, dims);
 							return result.Id.ToString();
 						}
