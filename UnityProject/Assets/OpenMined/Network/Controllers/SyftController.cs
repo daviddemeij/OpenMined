@@ -266,6 +266,16 @@ namespace OpenMined.Network.Controllers
 							FloatTensor result = Functional.Ones(floatTensorFactory, dims);
 							return result.Id.ToString();
 						}
+						else if (msgObj.functionCall == "randn")
+						{
+						    int[] dims = new int[msgObj.tensorIndexParams.Length];
+							for (int i = 0; i < msgObj.tensorIndexParams.Length; i++)
+							{
+								dims[i] = int.Parse(msgObj.tensorIndexParams[i]);
+							}
+							FloatTensor result = Functional.Randn(floatTensorFactory, dims);
+							return result.Id.ToString();
+						}
 						else if (msgObj.functionCall == "random")
 						{
 						    int[] dims = new int[msgObj.tensorIndexParams.Length];

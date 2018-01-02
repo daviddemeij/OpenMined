@@ -113,6 +113,23 @@ namespace OpenMined.Syft.Tensor
             result.Add(1.0F, inline: true);
             return result;
         }
+        public static FloatTensor Randn(FloatTensorFactory factory, int[] dims)
+        {
+        int dims_prod = 1;
+            foreach (int dim in dims)
+            {
+                dims_prod *= dim;
+            }
+            FloatTensor result = factory.ctrl.floatTensorFactory.Create(dims);
+            for (int i = 0; i < dims_prod; i++)
+            {
+                // Reference: https://stackoverflow.com/questions/218060/random-gaussian-variables
+                float u1 = 1.0F - UnityEngine.Random.value;
+                float u2 = 1.0F - UnityEngine.Random.value;
+                result.Data[i] = Convert.ToSingle(Math.Sqrt(-2.0F * Math.Log(u1)) * Math.Sin(2.0F * Math.PI * u2));
+            }
+            return result.View(dims);
+        }
         public static FloatTensor Random(FloatTensorFactory factory, int[] dims)
         {
             int dims_prod = 1;
