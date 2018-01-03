@@ -487,7 +487,18 @@ def test_log1p_():
 
     # a does change when inlined
     np.testing.assert_almost_equal(expected, a.to_numpy(), decimal=5)
-    
+
+def test_abs_():
+    data = np.array([-1., -2., 3., 4., 5., -6.])
+    expected = np.array([0.5]*6)
+    a = pytest.sc.FloatTensor(data)
+    a.random_()
+
+    # a does change when inlined
+    np.testing.assert_allclose(a.to_numpy(), expected, rtol=0.5, atol=0.5)
+    np.testing.assert_almost_equal(a.to_numpy(), expected,
+                                   decimal=decimal_accuracy, verbose=verbosity)
+
 
 def test_reciprocal():
     data = np.array([1., 2., 3., 4.])

@@ -580,6 +580,11 @@ namespace OpenMined.Syft.Tensor
                     this.Pow(float.Parse(msgObj.tensorIndexParams[0]), inline: true);
                     return this.id + "";
                 }
+                case "random":
+                {
+                    var result = Random(shape, inline: false);
+                    return result.Id.ToString();
+                }
                 case "random_":
                 {
                     var result = Random(shape, inline: true);

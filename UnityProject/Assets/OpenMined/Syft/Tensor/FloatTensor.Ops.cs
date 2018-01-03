@@ -1062,10 +1062,10 @@ namespace OpenMined.Syft.Tensor
 
         public FloatTensor Random(int[] dims, bool inline = true)
         {
-            int[] dims_prod = {1};
+            int dims_prod = 1;
             foreach (int dim in dims)
             {
-                dims_prod[0] *= dim;
+                dims_prod *= dim;
             }
 
             if (dataOnGpu)
@@ -1073,7 +1073,7 @@ namespace OpenMined.Syft.Tensor
                 throw new NotImplementedException();
             }
             FloatTensor result = inline ? this : factory.ctrl.floatTensorFactory.Create(dims);
-            for (int i = 0; i < dims_prod[0]; i++)
+            for (int i = 0; i < dims_prod; i++)
             {
                 result.Data[i] = UnityEngine.Random.value;
             }
