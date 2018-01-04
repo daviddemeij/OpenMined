@@ -14,7 +14,7 @@ namespace OpenMined.Syft.Layer
 		private readonly FloatTensor _weights;
 		private FloatTensor _bias;
 		
-		public Linear (SyftController _controller, int input, int output)
+		public Linear (SyftController _controller, int input, int output, string initializer)
 		{
 			init("linear");
 
@@ -24,7 +24,7 @@ namespace OpenMined.Syft.Layer
 			_output = output;
 			
 			int[] weightShape = { input, output };
-			var weights = controller.RandomWeights(input * output);
+            var weights = initializer == "Xavier" ? controller.RandomWeights(input * output, input) : controller.RandomWeights(input * output);
 			_weights = controller.floatTensorFactory.Create(_shape: weightShape, _data: weights, _autograd: true, _keepgrads: true);
 
 			int[] biasShape = {1,output};

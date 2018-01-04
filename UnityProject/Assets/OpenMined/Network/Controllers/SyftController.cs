@@ -41,14 +41,25 @@ namespace OpenMined.Network.Controllers
 			get { return shader; }
 		}
 
-		public float[] RandomWeights (int length)
+		public float[] RandomWeights (int length, int inputSize=0)
 		{
-			Random.InitState (1);
-			float[] syn0 = new float[length];
-			for (int i = 0; i < length; i++) {
-				syn0 [i] = 2 * Random.value - 1;
-			}
-			return syn0;
+           float _inputSize = (float)inputSize;
+           float Xavier = (float)Math.Sqrt(1.0F / _inputSize);
+           Random.InitState (1);
+           float[] syn0 = new float[length];
+                for (int i = 0; i < length; i++)
+                {
+                    // Use Xavier Initialization if inputSize is given
+                    if (inputSize>0)
+                    {
+                        syn0 [i] = Random.Range(-Xavier, Xavier);
+                    }
+                    else
+                    {
+                        syn0 [i] = 2 * Random.value - 1;
+                    }
+                }
+		    return syn0;
 		}
 
 		public Model getModel(int index)
@@ -159,7 +170,9 @@ namespace OpenMined.Network.Controllers
 							
 							if (model_type == "linear")
 							{
-								return new Linear(this, int.Parse(msgObj.tensorIndexParams[1]), int.Parse(msgObj.tensorIndexParams[2])).Id.ToString();
+								return new Linear(this, int.Parse(msgObj.tensorIndexParams[1]),
+								int.Parse(msgObj.tensorIndexParams[2]),
+								msgObj.tensorIndexParams[3]).Id.ToString();
 							}
 							else if (model_type == "relu")
 							{
