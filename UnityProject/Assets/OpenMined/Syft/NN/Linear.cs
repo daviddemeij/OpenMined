@@ -14,7 +14,7 @@ namespace OpenMined.Syft.Layer
 		private readonly FloatTensor _weights;
 		private FloatTensor _bias;
 		
-		public Linear (SyftController _controller, int input, int output, string initializer)
+		public Linear (SyftController _controller, int input, int output, string initializer="Xavier")
 		{
 			init("linear");
 
