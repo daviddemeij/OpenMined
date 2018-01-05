@@ -618,8 +618,16 @@ namespace OpenMined.Syft.Tensor
                 }
                 case "random_":
                 {
-                    var result = Random(shape, inline: true);
-                    return result.Id.ToString();
+                    if (msgObj.tensorIndexParams.Length > 1)
+                    {
+                        var result = Random(shape, float.Parse(msgObj.tensorIndexParams[0]), float.Parse(msgObj.tensorIndexParams[1]), inline: true);
+                        return result.Id.ToString();
+                    }
+                    else
+                    {
+                        var result = Random(shape, float.Parse(msgObj.tensorIndexParams[0]), inline: true);
+                        return result.Id.ToString();
+                    }
                 }
                 case "reciprocal":
                 {
@@ -875,7 +883,11 @@ namespace OpenMined.Syft.Tensor
                     var result = Transpose();
                     return result.Id.ToString();
                 }
-
+                case "transpose_":
+                {
+                    this.Transpose(inline: true);
+                    return Id.ToString();
+                }
                 case "triu":
                 {
                     var K = int.Parse(msgObj.tensorIndexParams[0]);
@@ -895,7 +907,14 @@ namespace OpenMined.Syft.Tensor
                     var result = Trunc();
                     return result.Id.ToString();
                 }
+                case "uniform_":
+                {
+                    Debug.Log(float.Parse(msgObj.tensorIndexParams[0]));
+                    Debug.Log(float.Parse(msgObj.tensorIndexParams[1]));
 
+                    var result = Uniform(shape, start:float.Parse(msgObj.tensorIndexParams[0]), to:float.Parse(msgObj.tensorIndexParams[1]), inline: true);
+                    return result.Id.ToString();
+                }
                 case "unsqueeze":
                 {
                     var result = Unsqueeze(int.Parse(msgObj.tensorIndexParams[0]), inline:false);
