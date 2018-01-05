@@ -25,6 +25,7 @@ namespace OpenMined.Network.Controllers
 		private Dictionary<int, Optimizer> optimizers;
 		
 		public bool allow_new_tensors = true;
+        public int random_seed = 0;
 
 		public SyftController (ComputeShader _shader)
 		{
@@ -45,20 +46,23 @@ namespace OpenMined.Network.Controllers
 		{
            float _inputSize = (float)inputSize;
            float Xavier = (float)Math.Sqrt(1.0F / _inputSize);
-           Random.InitState (1);
            float[] syn0 = new float[length];
-                for (int i = 0; i < length; i++)
+           if (random_seed > 0)
+           {
+                Random.InitState (random_seed);
+           }
+            for (int i = 0; i < length; i++)
+            {
+                // Use Xavier Initialization if inputSize is given
+                if (inputSize>0)
                 {
-                    // Use Xavier Initialization if inputSize is given
-                    if (inputSize>0)
-                    {
-                        syn0 [i] = Random.Range(-Xavier, Xavier);
-                    }
-                    else
-                    {
-                        syn0 [i] = 2 * Random.value - 1;
-                    }
+                    syn0 [i] = Random.Range(-Xavier, Xavier);
                 }
+                else
+                {
+                    syn0 [i] = 2 * Random.value - 1;
+                }
+            }
 		    return syn0;
 		}
 
@@ -294,7 +298,12 @@ namespace OpenMined.Network.Controllers
 						{
 							FloatTensor tensor = floatTensorFactory.Create(filepath: msgObj.tensorIndexParams[0], _shader:this.Shader);
 							return tensor.Id.ToString();
-						} 
+						}
+						else if (msgObj.functionCall == "set_seed")
+						{
+                             random_seed = int.Parse(msgObj.tensorIndexParams[0]);
+                             return "Random seed set!";
+						}
 						else if (msgObj.functionCall == "concatenate")
 						{
 							List<int> tensor_ids = new List<int>();
@@ -322,7 +331,7 @@ namespace OpenMined.Network.Controllers
 							{
 								dims[i] = int.Parse(msgObj.tensorIndexParams[i]);
 							}
-							FloatTensor result = Functional.Randn(floatTensorFactory, dims);
+							FloatTensor result = Functional.Randn(floatTensorFactory, dims, random_seed);
 							return result.Id.ToString();
 						}
 						else if (msgObj.functionCall == "random")
@@ -332,7 +341,7 @@ namespace OpenMined.Network.Controllers
 							{
 								dims[i] = int.Parse(msgObj.tensorIndexParams[i]);
 							}
-							FloatTensor result = Functional.Random(floatTensorFactory, dims);
+							FloatTensor result = Functional.Random(floatTensorFactory, dims, random_seed);
 							return result.Id.ToString();
 						}
 						else if (msgObj.functionCall == "zeros")
