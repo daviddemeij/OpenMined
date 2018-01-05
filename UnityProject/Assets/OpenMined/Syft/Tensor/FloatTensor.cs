@@ -909,9 +909,6 @@ namespace OpenMined.Syft.Tensor
                 }
                 case "uniform_":
                 {
-                    Debug.Log(float.Parse(msgObj.tensorIndexParams[0]));
-                    Debug.Log(float.Parse(msgObj.tensorIndexParams[1]));
-
                     var result = Uniform(shape, start:float.Parse(msgObj.tensorIndexParams[0]), to:float.Parse(msgObj.tensorIndexParams[1]), inline: true);
                     return result.Id.ToString();
                 }
