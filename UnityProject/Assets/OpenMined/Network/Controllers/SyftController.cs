@@ -47,10 +47,7 @@ namespace OpenMined.Network.Controllers
            float _inputSize = (float)inputSize;
            float Xavier = (float)Math.Sqrt(1.0F / _inputSize);
            float[] syn0 = new float[length];
-           if (random_seed > 0)
-           {
-                Random.InitState (random_seed);
-           }
+           if (random_seed > 0) { Random.InitState (random_seed); }
             for (int i = 0; i < length; i++)
             {
                 // Use Xavier Initialization if inputSize is given
