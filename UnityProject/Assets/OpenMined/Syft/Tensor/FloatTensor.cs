@@ -360,6 +360,12 @@ namespace OpenMined.Syft.Tensor
                     int dim = int.Parse(msgObj.tensorIndexParams[0]);
                     return CumSum(dim: dim).Id.ToString();
                 }
+                case "delete":
+                {
+                   Debug.LogFormat("<color=cyan>Delete:</color> {0}", this.id);
+                   Delete();
+                   return "Deleted tensor";
+                }
                 case "div_elem":
                 {
                     return this.Div(factory.Get(int.Parse(msgObj.tensorIndexParams[0]))).Id + "";
@@ -438,6 +444,19 @@ namespace OpenMined.Syft.Tensor
                 {
                     return this.Pow(factory.Get(int.Parse(msgObj.tensorIndexParams[0]))).id + "";
                 }
+                //case "fill_":
+                //{
+                //    data = float[].Parse(msgObj.tensorIndexParams[0]);
+                //    starting_offset = msgObj.tensorIndexParams[1]);
+                //    length_to_fill = msgObj.tensorIndexParams[2]);
+                //    if(length_to_fill>0)
+                //    {
+                //        return this.Fill(
+                //    }
+                //    else
+                //    {
+                //    }
+                //}
                 case "floor":
                 {
                     return this.Floor().id + "";

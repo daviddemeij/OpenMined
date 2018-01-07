@@ -546,6 +546,11 @@ namespace OpenMined.Syft.Tensor
             return result_3d.View(shape);
         }
 
+        public void Delete()
+        {
+            factory.ctrl.floatTensorFactory.Delete(this.Id);
+        }
+
         public FloatTensor Div(FloatTensor x, bool inline = false, FloatTensor result = null)
         {
             if (!IsContiguous() || !x.IsContiguous()) {
