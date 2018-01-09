@@ -32,9 +32,6 @@ namespace OpenMined.Syft.Layer
         private FloatTensor last_input_buffer;
         private FloatTensor last_target_buffer;
 
-        private FloatTensor test_loss;
-        private FloatTensor train_loss;
-
         public abstract FloatTensor Forward (FloatTensor input);
         
         protected override string ProcessForwardMessage(Command msgObj, SyftController ctrl)
@@ -54,7 +51,7 @@ namespace OpenMined.Syft.Layer
             for (int i = 1; i < input.Shape.Length; i++) input_buffer_shape[i] = input.Shape[i];
 
             last_input_buffer = controller.floatTensorFactory.Create(_shape: input_buffer_shape, _autograd:true);
-            test_loss = controller.floatTensorFactory.Create(_shape: new int[]{1});
+            FloatTensor test_loss = controller.floatTensorFactory.Create(_shape: new int[]{1});
 
             int[] target_buffer_shape = new int[target.Shape.Length];
             target_buffer_shape[0] = batch_size;
