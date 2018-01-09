@@ -31,26 +31,62 @@ namespace OpenMined.Syft.Layer
 
         private FloatTensor last_input_buffer;
         private FloatTensor last_target_buffer;
-        
+
+        private FloatTensor test_loss;
+        private FloatTensor train_loss;
+
         public abstract FloatTensor Forward (FloatTensor input);
         
         protected override string ProcessForwardMessage(Command msgObj, SyftController ctrl)
         {
             var input = ctrl.floatTensorFactory.Get(int.Parse(msgObj.tensorIndexParams[0]));
-            if (input.Autograd)
-            {
-                var result = this.Forward(input);
-                return result.Id + "";
-            }
-            else
-            {
-                throw new Exception("Input to Model object must have autograd == true but autograd == false!!!");
-            }
+            var result = this.Forward(input);
+            return result.Id + "";
         }
+
+      public string Evaluate(FloatTensor input, FloatTensor target, Loss.Loss criterion, int batch_size)
+       {
+            if(input.Shape[0] != target.Shape[0])
+                throw new InvalidDataException("Input and Target tensors don't seem to have the right dims");
+
+            int[] input_buffer_shape = new int[input.Shape.Length];
+            input_buffer_shape[0] = batch_size;
+            for (int i = 1; i < input.Shape.Length; i++) input_buffer_shape[i] = input.Shape[i];
+
+            last_input_buffer = controller.floatTensorFactory.Create(_shape: input_buffer_shape, _autograd:true);
+            test_loss = controller.floatTensorFactory.Create(_shape: new int[]{1});
+
+            int[] target_buffer_shape = new int[target.Shape.Length];
+            target_buffer_shape[0] = batch_size;
+            for (int i = 1; i < target.Shape.Length; i++) target_buffer_shape[i] = target.Shape[i];
+
+            last_target_buffer = controller.floatTensorFactory.Create(_shape: target_buffer_shape, _autograd:true);
+            float loss = 0;
+
+            int[] target_shape = target.Shape;
+            target_shape[0] = 0;
+            int num_batches = (input.Shape[0] / batch_size);
+            FloatTensor predictions = controller.floatTensorFactory.Create(target_shape);
+            for (int batch_i = 0; batch_i < num_batches; batch_i++)
+            {
+                last_input_buffer.Fill(input, starting_offset: batch_i * batch_size,
+                    length_to_fill: batch_size);
+                last_target_buffer.Fill(target, starting_offset: batch_i * batch_size,
+                    length_to_fill: batch_size);
+                var pred = Forward(last_input_buffer);
+                var batch_loss = criterion.Forward(pred, last_target_buffer);
+                List<int> tensor_ids = new List<int> {predictions.Id, pred.Id};
+                predictions = Functional.Concatenate(controller.floatTensorFactory, tensor_ids, 0);
+                controller.floatTensorFactory.Get(tensor_ids[0]).Delete();
+                loss += (batch_loss.Data[0] / batch_size);
+            }
+            test_loss.Fill(loss / num_batches);
+            return test_loss.Id.ToString() + "," + predictions.Id.ToString();
+       }
+
 
         public int PrepareToFit(FloatTensor input, FloatTensor target, Loss.Loss criterion, Optimizer optimizer, int batch_size)
         {
-
             if(input.Shape[0] != target.Shape[0])
                 throw new InvalidDataException("Input and Target tensors don't seem to have the right dims");
             
@@ -62,7 +98,6 @@ namespace OpenMined.Syft.Layer
             for (int i = 1; i < input.Shape.Length; i++) input_buffer_shape[i] = input.Shape[i];
 
             last_input_buffer = controller.floatTensorFactory.Create(_shape: input_buffer_shape, _autograd:true);
-            
             int[] target_buffer_shape = new int[target.Shape.Length];
             target_buffer_shape[0] = batch_size;
             for (int i = 1; i < target.Shape.Length; i++) target_buffer_shape[i] = target.Shape[i];
@@ -83,19 +118,20 @@ namespace OpenMined.Syft.Layer
             
             return (int)(input.Shape[0] / batch_size);
         }
-        
+
         public string Fit(int start_batch_id, int end_batch_id, int iter = 1)
         {
             float loss = 0;
+            int batch_size = this.last_input_buffer.Shape[0];
             for (int i = 0; i < iter; i++)
             {
                 for (int batch_i = start_batch_id; batch_i < end_batch_id; batch_i++)
                 {
-                    loss += FitBatch(batch_i, i + 1);       
+                    loss += FitBatch(batch_i, i + 1) / batch_size;
                 }
             }
             
-            return (loss/iter).ToString();
+            return (loss/(iter*(end_batch_id-start_batch_id))).ToString();
         }
 
         public float FitBatch(int batch_i, int iteration)
@@ -110,6 +146,7 @@ namespace OpenMined.Syft.Layer
                 var pred = Forward(last_input_buffer);
                 var loss = _criterion.Forward(pred, last_target_buffer);
 
+
                 if (cached_ones_grad_for_backprop == null || cached_ones_grad_for_backprop.Size != loss.Size)
                 {
                     cached_ones_grad_for_backprop = loss.createOnesTensorLike();
@@ -119,7 +156,6 @@ namespace OpenMined.Syft.Layer
                 loss.Backward(cached_ones_grad_for_backprop);
 
                 _optimizer.Step(this.last_input_buffer.Shape[0], iteration);
-
                 return loss.Data[0];
             }
             else
@@ -150,9 +186,18 @@ namespace OpenMined.Syft.Layer
                     int start_batch_id = int.Parse(msgObj.tensorIndexParams[0]);
                     int end_batch_id = int.Parse(msgObj.tensorIndexParams[1]);
                     int iters = int.Parse(msgObj.tensorIndexParams[2]);
-
                     return Fit(start_batch_id, end_batch_id, iters);
                 }
+
+                case "evaluate":
+                {
+                    FloatTensor input = ctrl.floatTensorFactory.Get(int.Parse(msgObj.tensorIndexParams[0]));
+                    FloatTensor target = ctrl.floatTensorFactory.Get(int.Parse(msgObj.tensorIndexParams[1]));
+                    Loss.Loss criterion = ctrl.getLoss(int.Parse(msgObj.tensorIndexParams[2]));
+                    int batch_size = int.Parse(msgObj.tensorIndexParams[3]);
+                    return Evaluate(input, target, criterion, batch_size);
+                }
+
             }
 
             return ProcessMessageAsLayerObject(msgObj, ctrl);
