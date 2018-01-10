@@ -22,7 +22,7 @@
 
 ## Step 3: Get Current Float Tensor Working
 
-- Open Unity Application (located within the cloned repo above)
+- Open the Unity Project in Unity (located within the cloned repo above at *OpenMined/UnityProject*)
 - In the *Project Pane*, double click *Assets/OpenMined/main*
 - Click *“Play”* button at the top
 - Open the *[Syft Tensor Example Notebook.ipynb](https://github.com/OpenMined/OpenMined/blob/master/notebooks/Syft%20Tensor%20Example%20Notebook.ipynb)* Notebook
