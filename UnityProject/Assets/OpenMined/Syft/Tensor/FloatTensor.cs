@@ -362,7 +362,6 @@ namespace OpenMined.Syft.Tensor
                 }
                 case "delete":
                 {
-                   Debug.LogFormat("<color=cyan>Delete:</color> {0}", this.id);
                    Delete();
                    return "Deleted tensor";
                 }

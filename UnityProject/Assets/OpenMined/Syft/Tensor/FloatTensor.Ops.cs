@@ -717,19 +717,22 @@ namespace OpenMined.Syft.Tensor
             }
         }
         
-        public FloatTensor Fill(FloatTensor value, int starting_offset, int length_to_fill, bool inline = true)
+        public FloatTensor Fill(FloatTensor value, int starting_offset, int length_to_fill, bool inline = true, int starting_offset_fill = 0)
         {
-            
-            if(length_to_fill > this.Size)
+
+            if(length_to_fill > (this.Size - starting_offset_fill))
                 throw new InvalidOperationException("Tensor not big enough. this.size == " + this.Size + " whereas length_to_fill == " + length_to_fill);
-            
+
             if (!inline || dataOnGpu)
             {
                 throw new NotImplementedException();
             }
             else
             {
-                for (int i = 0; i < length_to_fill; i++) data[i] = value.Data[starting_offset + i];
+                for (int i = 0; i < length_to_fill; i++)
+                {
+                    data[starting_offset_fill + i] = value.Data[starting_offset + i];
+                }
                 return this;
             }
         }

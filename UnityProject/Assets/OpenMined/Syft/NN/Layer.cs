@@ -22,18 +22,12 @@ namespace OpenMined.Syft.Layer
 
         private FloatTensor _input_tensor_origin;
         private FloatTensor _target_tensor_origin;
-        
-        private FloatTensor[] _input_tensors;
-        private FloatTensor[] _target_tensors;
 
-        private List<FloatTensor> input_buffers;
-        private List<FloatTensor> target_buffers;
-
-        private FloatTensor last_input_buffer;
-        private FloatTensor last_target_buffer;
+        private FloatTensor input_buffer;
+        private FloatTensor target_buffer;
 
         public abstract FloatTensor Forward (FloatTensor input);
-        
+
         protected override string ProcessForwardMessage(Command msgObj, SyftController ctrl)
         {
             var input = ctrl.floatTensorFactory.Get(int.Parse(msgObj.tensorIndexParams[0]));
@@ -41,44 +35,51 @@ namespace OpenMined.Syft.Layer
             return result.Id + "";
         }
 
-      public string Evaluate(FloatTensor input, FloatTensor target, Loss.Loss criterion, int batch_size)
+      public string Evaluate(FloatTensor test_input, FloatTensor test_target, Loss.Loss criterion, int batch_size)
        {
-            if(input.Shape[0] != target.Shape[0])
+            if(test_input.Shape[0] != test_target.Shape[0])
                 throw new InvalidDataException("Input and Target tensors don't seem to have the right dims");
 
-            int[] input_buffer_shape = new int[input.Shape.Length];
+            int[] input_buffer_shape = new int[test_input.Shape.Length];
             input_buffer_shape[0] = batch_size;
-            for (int i = 1; i < input.Shape.Length; i++) input_buffer_shape[i] = input.Shape[i];
+            for (int i = 1; i < test_input.Shape.Length; i++) input_buffer_shape[i] = test_input.Shape[i];
 
-            last_input_buffer = controller.floatTensorFactory.Create(_shape: input_buffer_shape, _autograd:true);
+            FloatTensor test_input_buffer = controller.floatTensorFactory.Create(_shape: input_buffer_shape, _autograd:true);
             FloatTensor test_loss = controller.floatTensorFactory.Create(_shape: new int[]{1});
 
-            int[] target_buffer_shape = new int[target.Shape.Length];
+            int[] target_buffer_shape = new int[test_target.Shape.Length];
             target_buffer_shape[0] = batch_size;
-            for (int i = 1; i < target.Shape.Length; i++) target_buffer_shape[i] = target.Shape[i];
+            for (int i = 1; i < test_target.Shape.Length; i++) target_buffer_shape[i] = test_target.Shape[i];
 
-            last_target_buffer = controller.floatTensorFactory.Create(_shape: target_buffer_shape, _autograd:true);
+            FloatTensor test_target_buffer = controller.floatTensorFactory.Create(_shape: target_buffer_shape, _autograd:true);
             float loss = 0;
+            int num_batches = (int)(test_input.Shape[0] / batch_size);
+            FloatTensor predictions = controller.floatTensorFactory.Create(test_target.Shape);
 
-            int[] target_shape = target.Shape;
-            target_shape[0] = 0;
-            int num_batches = (input.Shape[0] / batch_size);
-            FloatTensor predictions = controller.floatTensorFactory.Create(target_shape);
+            int test_input_batch_offset = batch_size;
+            for (int i = 1; i < test_input.Shape.Length; i++)
+                test_input_batch_offset *= test_input.Shape[i];
+
+            int test_target_batch_offset = batch_size;
+            for (int i = 1; i < test_target.Shape.Length; i++)
+                test_target_batch_offset *= test_target.Shape[i];
+
             for (int batch_i = 0; batch_i < num_batches; batch_i++)
             {
-                last_input_buffer.Fill(input, starting_offset: batch_i * batch_size,
-                    length_to_fill: batch_size);
-                last_target_buffer.Fill(target, starting_offset: batch_i * batch_size,
-                    length_to_fill: batch_size);
-                var pred = Forward(last_input_buffer);
-                var batch_loss = criterion.Forward(pred, last_target_buffer);
+                test_input_buffer.Fill(test_input, starting_offset: batch_i * test_input_batch_offset,
+                    length_to_fill: test_input_batch_offset);
+                test_target_buffer.Fill(test_target, starting_offset: batch_i * test_target_batch_offset,
+                    length_to_fill: test_target_batch_offset);
+                var pred = Forward(test_input_buffer);
+                var batch_loss = criterion.Forward(pred, test_target_buffer);
                 List<int> tensor_ids = new List<int> {predictions.Id, pred.Id};
-                predictions = Functional.Concatenate(controller.floatTensorFactory, tensor_ids, 0);
-                controller.floatTensorFactory.Get(tensor_ids[0]).Delete();
+                predictions.Fill(pred, starting_offset: 0, length_to_fill: test_target_batch_offset, starting_offset_fill: test_target_batch_offset * batch_i);
                 loss += (batch_loss.Data[0] / batch_size);
             }
             test_loss.Fill(loss / num_batches);
             return test_loss.Id.ToString() + "," + predictions.Id.ToString();
+
+
        }
 
 
@@ -94,12 +95,12 @@ namespace OpenMined.Syft.Layer
             input_buffer_shape[0] = batch_size;
             for (int i = 1; i < input.Shape.Length; i++) input_buffer_shape[i] = input.Shape[i];
 
-            last_input_buffer = controller.floatTensorFactory.Create(_shape: input_buffer_shape, _autograd:true);
+            input_buffer = controller.floatTensorFactory.Create(_shape: input_buffer_shape, _autograd:true);
             int[] target_buffer_shape = new int[target.Shape.Length];
             target_buffer_shape[0] = batch_size;
             for (int i = 1; i < target.Shape.Length; i++) target_buffer_shape[i] = target.Shape[i];
             
-            last_target_buffer = controller.floatTensorFactory.Create(_shape: target_buffer_shape, _autograd:true);
+            target_buffer = controller.floatTensorFactory.Create(_shape: target_buffer_shape, _autograd:true);
             
             this._batch_size = batch_size;
             this._criterion = criterion;
@@ -119,7 +120,7 @@ namespace OpenMined.Syft.Layer
         public string Fit(int start_batch_id, int end_batch_id, int iter = 1)
         {
             float loss = 0;
-            int batch_size = this.last_input_buffer.Shape[0];
+            int batch_size = this.input_buffer.Shape[0];
             for (int i = 0; i < iter; i++)
             {
                 for (int batch_i = start_batch_id; batch_i < end_batch_id; batch_i++)
@@ -135,13 +136,12 @@ namespace OpenMined.Syft.Layer
         {
             if (((batch_i + 1) * _input_batch_offset) < _input_tensor_origin.Size)
             {
-                last_input_buffer.Fill(_input_tensor_origin, starting_offset: batch_i * _input_batch_offset,
+                input_buffer.Fill(_input_tensor_origin, starting_offset: batch_i * _input_batch_offset,
                     length_to_fill: _input_batch_offset);
-                last_target_buffer.Fill(_target_tensor_origin, starting_offset: batch_i * _target_batch_offset,
+                target_buffer.Fill(_target_tensor_origin, starting_offset: batch_i * _target_batch_offset,
                     length_to_fill: _target_batch_offset);
-                
-                var pred = Forward(last_input_buffer);
-                var loss = _criterion.Forward(pred, last_target_buffer);
+                var pred = Forward(input_buffer);
+                var loss = _criterion.Forward(pred, target_buffer);
 
 
                 if (cached_ones_grad_for_backprop == null || cached_ones_grad_for_backprop.Size != loss.Size)
@@ -152,7 +152,7 @@ namespace OpenMined.Syft.Layer
                 
                 loss.Backward(cached_ones_grad_for_backprop);
 
-                _optimizer.Step(this.last_input_buffer.Shape[0], iteration);
+                _optimizer.Step(this.input_buffer.Shape[0], iteration);
                 return loss.Data[0];
             }
             else
@@ -188,11 +188,11 @@ namespace OpenMined.Syft.Layer
 
                 case "evaluate":
                 {
-                    FloatTensor input = ctrl.floatTensorFactory.Get(int.Parse(msgObj.tensorIndexParams[0]));
-                    FloatTensor target = ctrl.floatTensorFactory.Get(int.Parse(msgObj.tensorIndexParams[1]));
+                    FloatTensor test_input = ctrl.floatTensorFactory.Get(int.Parse(msgObj.tensorIndexParams[0]));
+                    FloatTensor test_target = ctrl.floatTensorFactory.Get(int.Parse(msgObj.tensorIndexParams[1]));
                     Loss.Loss criterion = ctrl.getLoss(int.Parse(msgObj.tensorIndexParams[2]));
                     int batch_size = int.Parse(msgObj.tensorIndexParams[3]);
-                    return Evaluate(input, target, criterion, batch_size);
+                    return Evaluate(test_input, test_target, criterion, batch_size);
                 }
 
             }
