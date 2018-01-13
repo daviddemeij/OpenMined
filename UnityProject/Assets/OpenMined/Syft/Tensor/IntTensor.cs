@@ -4,6 +4,7 @@ using OpenMined.Network.Utils;
 using OpenMined.Network.Controllers;
 using System.Collections.Generic;
 using OpenMined.Syft.Tensor.Factories;
+using System.Linq;
 
 namespace OpenMined.Syft.Tensor
 {
@@ -146,9 +147,30 @@ namespace OpenMined.Syft.Tensor
             throw new NotImplementedException();
         }
 
-        public IntTensor Add(int value, bool inline)
+        public IntTensor Add(IntTensor x, bool inline = false)
         {
-            throw new NotImplementedException();
+            if (dataOnGpu)
+            {
+                throw new NotImplementedException();
+            }
+
+            IntTensor result = factory.Create(this.shape);
+            result.Data = data.AsParallel().Zip(x.Data.AsParallel(), (a, b) => a + b).ToArray();
+
+            return result;
+        }
+
+        public IntTensor Add(int value, bool inline = false)
+        {
+            if (dataOnGpu)
+            {
+                throw new NotImplementedException();
+            }
+
+            IntTensor result = factory.Create(this.shape);
+            result.Data = data.AsParallel().Select(x => x + value).ToArray();
+
+            return result;
         }
 
         public IntTensor View(int[] new_shape, bool inline = true, FloatTensor result = null)
@@ -185,6 +207,32 @@ namespace OpenMined.Syft.Tensor
         {
             switch (msgObj.functionCall)
             {
+                case "add_elem":
+                {
+                    Debug.LogFormat("add_elem");
+                    var tensor_1 = factory.Get(int.Parse(msgObj.tensorIndexParams[0]));
+                    var result = this.Add(tensor_1);
+                    return result.id + "";
+                }
+                case "add_elem_":
+                {
+                    Debug.LogFormat("add_elem_");
+                    var tensor_1 = factory.Get(int.Parse(msgObj.tensorIndexParams[0]));
+                    this.Add(tensor_1, inline: true);
+                    return this.id + "";
+                }
+                case "add_scalar":
+                {
+                    Debug.LogFormat("add_scalar");
+                    IntTensor result = this.Add(int.Parse(msgObj.tensorIndexParams[0]));
+                    return result.Id + "";
+                }
+                case "add_scalar_":
+                {
+                    Debug.LogFormat("add_scalar_");
+                    this.Add(int.Parse(msgObj.tensorIndexParams[0]), inline: true);
+                    return this.id + "";
+                }
                 case "get":
                 {
                     var param_to_get = msgObj.tensorIndexParams[0];

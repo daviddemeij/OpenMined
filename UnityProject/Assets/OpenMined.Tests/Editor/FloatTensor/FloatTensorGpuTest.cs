@@ -7,7 +7,7 @@ using OpenMined.Syft.Tensor;
 using OpenMined.Network.Servers;
 using UnityEditor.VersionControl;
 
-namespace OpenMined.Tests
+namespace OpenMined.Tests.Editor.FloatTensorTests
 {
     [Category("FloatTensorGPUTests")]
     public class FloatTensorGPUTest
