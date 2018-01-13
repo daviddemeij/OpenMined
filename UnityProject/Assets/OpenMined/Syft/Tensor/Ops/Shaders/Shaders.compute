@@ -126,6 +126,17 @@ void AddElem (uint3 id: SV_DispatchThreadID) {
 	AddElemDataResult[id.x] = AddElemDataA[id.x] + AddElemDataB[id.x];
 }
 
+#pragma kernel AddElemInt
+
+StructuredBuffer<int> AddElemIntDataA;
+StructuredBuffer<int> AddElemIntDataB;
+RWStructuredBuffer<int> AddElemIntDataResult;
+
+[numthreads(4,1,1)]
+void AddElemInt (uint3 id: SV_DispatchThreadID) {
+    AddElemIntDataResult[id.x] = AddElemIntDataA[id.x] + AddElemIntDataB[id.x];
+}
+
 #pragma kernel AddMM_
 
 RWStructuredBuffer<float> AddmmDataA_;

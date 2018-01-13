@@ -40,15 +40,7 @@ More about this in the [corresponding file](https://github.com/OpenMined/OpenMin
 
 ## Quick Setup
 
-1. Install Unity:
-    - Windows & Mac users: Download it from [here](https://store.unity.com/).
-    - Linux users: Download it from [here](http://beta.unity3d.com/download/ee86734cf592/public_download.html)
-
-Note: If you do not already have one, you will have to create a Unity account when you open the Application for the first time. For new users, a Personal account should be ok.
-
-2. Open project in Unity `[Open(Top Right of Home Screen) -> Directory/To/OpenMined -> /UnityProject]`
-
-3. Open Juptyer Notebooks in the `notebooks` directory.  
+You can find install instructions for your specific OS [here](https://github.com/OpenMined/tutorials#basics)
 
 ## Setup Troubleshooting
 

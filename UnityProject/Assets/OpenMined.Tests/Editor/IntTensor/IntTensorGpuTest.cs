@@ -17,14 +17,18 @@ namespace OpenMined.Tests.Editor.IntTensorTests
 
         public void AssertEqualTensorsData(IntTensor t1, IntTensor t2, double delta = 0.0d)
         {
+            
             int[] data1 = new int[t1.Size];
             t1.DataBuffer.GetData(data1);
+            
             int[] data2 = new int[t2.Size];
             t2.DataBuffer.GetData(data2);
+            
             Assert.AreEqual(t1.DataBuffer.count, t2.DataBuffer.count);
             Assert.AreEqual(t1.DataBuffer.stride, t2.DataBuffer.stride);
             Assert.AreNotEqual(t1.DataBuffer.GetNativeBufferPtr(), t2.DataBuffer.GetNativeBufferPtr());
             Assert.AreEqual(data1.Length, data2.Length);
+            
             for (var i = 0; i < data1.Length; ++i)
             {
                 //Debug.LogFormat("Asserting {0} equals {1} with accuracy {2} where diff is {3}", data1[i], data2[i], delta, data1[i] - data2[i]);

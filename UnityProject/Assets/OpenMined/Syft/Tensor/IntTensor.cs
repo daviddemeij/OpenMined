@@ -17,6 +17,10 @@ namespace OpenMined.Syft.Tensor
         private int sibling;
 
         private IntTensorFactory factory;
+        
+        // kernel pointers
+        [SerializeField] 
+        private static int AddElemIntKernel;
 
 
         public IntTensor()
@@ -37,11 +41,11 @@ namespace OpenMined.Syft.Tensor
             bool _keepgrads = false,
             string _creation_op = null)
         {
+            
             factory = _factory;
             dataOnGpu = _dataOnGpu;
             creation_op = _creation_op;
-
-
+            
             // First: check that shape is valid.
             if (_shape == null || _shape.Length == 0)
             {
@@ -64,7 +68,6 @@ namespace OpenMined.Syft.Tensor
                 // looks like we have GPU data being passed in... initialize a GPU tensor.
 
                 InitGpu(_shader, _dataBuffer, _shapeBuffer, _copyData);
-                initShaderKernels();
             }
             else
             {
@@ -131,16 +134,16 @@ namespace OpenMined.Syft.Tensor
             if (SystemInfo.supportsComputeShaders && shader == null)
             {
                 shader = factory.GetShader();
+                initShaderKernels();
             }
-
+            
+            
         }
 
         public void initShaderKernels()
         {
-            // TODO: move to IntegerTensor.ShaderOps.cs (doesn't exist yet)
-            throw new NotImplementedException();
+            //AddElemIntKernel = this.shader.FindKernel("AddElemInt");
         }
-
 
         public IntTensor Copy()
         {
@@ -149,12 +152,28 @@ namespace OpenMined.Syft.Tensor
 
         public IntTensor Add(IntTensor x, bool inline = false)
         {
+            IntTensor result = factory.Create(this.shape);
+            
             if (dataOnGpu)
             {
-                throw new NotImplementedException();
+                // move result tensor to GPU - TODO: init on gpu instead
+                result.Gpu(shader);
+             
+                // find kernel - TOOD: find all kernels in factory
+                int kernel_id = shader.FindKernel("AddElemInt");
+                
+                // set function parameters for kernel
+                shader.SetBuffer(kernel_id, "AddElemIntDataA", this.DataBuffer);
+                shader.SetBuffer(kernel_id, "AddElemIntDataB", x.DataBuffer);
+                shader.SetBuffer(kernel_id, "AddElemIntDataResult", result.DataBuffer);
+                
+                // execute kernel
+                shader.Dispatch(kernel_id, this.size, 1, 1);
+                
+                // return result
+                return result;
             }
 
-            IntTensor result = factory.Create(this.shape);
             result.Data = data.AsParallel().Zip(x.Data.AsParallel(), (a, b) => a + b).ToArray();
 
             return result;
