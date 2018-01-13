@@ -99,6 +99,26 @@ namespace OpenMined.Tests.Editor.IntTensorTests
             }
         }
 
+        [Test]
+        public void Trace()
+        {
+            // test #1
+            int[] data1 = {2, 2, 3, 4};
+            int[] shape1 = {2, 2};
+            var tensor = ctrl.intTensorFactory.Create(_data: data1, _shape: shape1);
+            int actual = tensor.Trace();
+            int expected = 6;
+
+            Assert.AreEqual(expected, actual);
+
+            // test #2
+            int[] data3 = {1, 2, 3};
+            int[] shape3 = {3};
+            var non2DTensor = ctrl.intTensorFactory.Create(_data: data3, _shape: shape3);
+            Assert.That(() => non2DTensor.Trace(),
+                Throws.TypeOf<InvalidOperationException>());
+        }
+
         /* closes class and namespace */
     }
 }

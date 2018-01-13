@@ -163,31 +163,50 @@ namespace OpenMined.Syft.Tensor
 
         public IntTensor Add(IntTensor x, bool inline = false)
         {
-            IntTensor result = factory.Create(this.shape);
-            
+
+            IntTensor result;
+
             if (dataOnGpu)
             {
-                // move result tensor to GPU - TODO: init on gpu instead
-                result.Gpu(shader);
-             
-                // find kernel - TOOD: find all kernels in factory
-                int kernel_id = shader.FindKernel("AddElemInt");
-                
-                // set function parameters for kernel
-                shader.SetBuffer(kernel_id, "AddElemIntDataA", this.DataBuffer);
-                shader.SetBuffer(kernel_id, "AddElemIntDataB", x.DataBuffer);
-                shader.SetBuffer(kernel_id, "AddElemIntDataResult", result.DataBuffer);
-                
-                // execute kernel
-                shader.Dispatch(kernel_id, this.size, 1, 1);
-                
-                // return result
+                if (!inline)
+                {
+                    result = factory.Create(this.shape);
+
+                    result.Gpu(shader);
+
+                    int kernel_id = shader.FindKernel("AddElemInt");
+
+                    shader.SetBuffer(kernel_id, "AddElemIntDataA", this.DataBuffer);
+                    shader.SetBuffer(kernel_id, "AddElemIntDataB", x.DataBuffer);
+                    shader.SetBuffer(kernel_id, "AddElemIntDataResult", result.DataBuffer);
+
+                    shader.Dispatch(kernel_id, this.size, 1, 1);
+
+                    return result;
+                }
+                else
+                {
+                    result = this;
+                    
+                    int kernel_id = shader.FindKernel("AddElemInt_");
+
+                    shader.SetBuffer(kernel_id, "AddElemIntDataA_", this.DataBuffer);
+                    shader.SetBuffer(kernel_id, "AddElemIntDataB_", x.DataBuffer);
+
+                    shader.Dispatch(kernel_id, this.size, 1, 1);
+       
+                    return result;
+                }
+            }
+            else
+            {
+                result = factory.Create(this.shape);
+                // run Addition on the CPU
+                result.Data = data.AsParallel().Zip(x.Data.AsParallel(), (a, b) => a + b).ToArray();
+
                 return result;
             }
-
-            result.Data = data.AsParallel().Zip(x.Data.AsParallel(), (a, b) => a + b).ToArray();
-
-            return result;
+              
         }
 
         public IntTensor Add(int value, bool inline = false)
@@ -201,6 +220,20 @@ namespace OpenMined.Syft.Tensor
             result.Data = data.AsParallel().Select(x => x + value).ToArray();
 
             return result;
+        }
+
+        public int Trace()
+        {
+            if ((shape.Length != 2) || (shape[0] != shape[1]))
+                throw new InvalidOperationException("Trace is defined on square 2d matrices only.");
+
+            if (dataOnGpu)
+            {
+                throw new NotImplementedException();
+            }
+
+            var stride = strides[0] + strides[1];
+            return Enumerable.Range(0, shape.Min()).AsParallel().Select(i => this[i * stride]).Sum();
         }
 
         public IntTensor View(int[] new_shape, bool inline = true, FloatTensor result = null)
@@ -344,6 +377,12 @@ namespace OpenMined.Syft.Tensor
                         return string.Join(" ", Data);
 
                     }
+                }
+
+                case "trace":
+                {
+                    var result = this.Trace();
+                    return result.ToString();
                 }
 
             }

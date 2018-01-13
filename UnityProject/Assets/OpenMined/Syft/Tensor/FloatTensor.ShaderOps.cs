@@ -291,6 +291,7 @@ namespace OpenMined.Syft.Tensor
                     shader.SetBuffer(AddElemKernel, "AddElemDataA", this.DataBuffer);
                     shader.SetBuffer(AddElemKernel, "AddElemDataB", tensor.DataBuffer);
                     shader.SetBuffer(AddElemKernel, "AddElemDataResult", result.DataBuffer);
+                    
                     shader.Dispatch(AddElemKernel, this.size, 1, 1);
                 }
                 else
