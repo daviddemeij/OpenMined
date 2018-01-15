@@ -75,8 +75,7 @@ namespace OpenMined.Syft.Tensor
 		public FloatTensor Abs(bool inline = false, FloatTensor result = null)
 		// Returns a new Tensor with the smallest integer greater than or equal to each element
 		{
-            result = HookGraph(ref result, "abs", inline);		
-
+            result = HookGraph(ref result, "abs", inline);
 			if (dataOnGpu) {
 				if (inline) { AbsGPU_ (); return this; }
 				else { return AbsGPU (result); }
@@ -548,7 +547,14 @@ namespace OpenMined.Syft.Tensor
 
         public void Delete()
         {
-            factory.ctrl.floatTensorFactory.Delete(this.Id);
+            // Lower the usage count by 1 when a tensor is deleted.
+            this.Usage_count = this.Usage_count -1;
+
+            // Only delete a tensor if it is just used once
+            if (this.Usage_count < 1)
+            {
+                factory.ctrl.floatTensorFactory.Delete(this.Id);
+            }
         }
 
         public FloatTensor Div(FloatTensor x, bool inline = false, FloatTensor result = null)

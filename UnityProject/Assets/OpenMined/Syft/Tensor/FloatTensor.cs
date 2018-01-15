@@ -42,7 +42,7 @@ namespace OpenMined.Syft.Tensor
             autograd = _autograd;
             keepgrads = _keepgrads;
             creation_op = _creation_op;
-
+            usage_count = 1;
             InitGraph();
             
             if (autograd)

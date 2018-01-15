@@ -26,6 +26,7 @@ namespace OpenMined.Syft.Tensor
 
         protected ComputeShader shader;
 
+        protected int usage_count;
         #endregion
 
         #region Properties
@@ -58,6 +59,12 @@ namespace OpenMined.Syft.Tensor
         {
             get { return size; }
             protected set { size = value; }
+        }
+
+        public int Usage_count
+        {
+            get { return usage_count; }
+            protected set { usage_count = value; }
         }
 
         public int Id
