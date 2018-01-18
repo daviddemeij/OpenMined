@@ -31,6 +31,8 @@ namespace OpenMined.Network.Controllers
 
 		public bool allow_new_tensors = true;
 
+        public Grid grid;
+
 		public SyftController (ComputeShader _shader)
 		{
 			shader = _shader;
@@ -41,6 +43,7 @@ namespace OpenMined.Network.Controllers
 			models = new Dictionary<int, Model> ();
 			agents = new Dictionary<int, Syft.NN.RL.Agent>();
 			optimizers = new Dictionary<int, Optimizer>();
+            grid = new Grid(this);
 		}
 
 		public ComputeShader Shader {
@@ -500,11 +503,30 @@ namespace OpenMined.Network.Controllers
                             var inputId = int.Parse(msgObj.tensorIndexParams[0]);
                             var targetId = int.Parse(msgObj.tensorIndexParams[1]);
 
-                            var g = new Grid(this);
-                            g.Run(inputId, targetId, msgObj.configurations, owner);
-
-                            return "";
+                            return this.grid.Run(inputId, targetId, msgObj.configurations, owner);
                         }
+
+                        if (msgObj.functionCall == "getResults")
+                        {
+
+                            // TODO -- This will be converted to poll blockchain
+                            //         It is written to poll IPFS right now so it
+                            //         appears to be working client side.
+
+                            var experiment = Ipfs.Get<IpfsExperiment>("QmVPQnsuks1cCbTMFGqpmHa4M45uUuKRomiqNvJEQAtcRS");
+                            var jobs = experiment.jobs.Select(job => Ipfs.Get<IpfsJob>(job));
+                            var jobResults = jobs.Select(job => this.grid.TrainModel(experiment.input, experiment.target, job, 1));
+
+                            var modelIds = jobResults.Select(r =>
+                            {
+                                var job = Ipfs.Get<IpfsJob>(r);
+                                var model = this.grid.CreateSequential(job.Model);
+                                return model.Id;
+                            });
+
+                            return modelIds.ToArray().ToString();
+                        }
+
                         break;
 				default:
 						break;

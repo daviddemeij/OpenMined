@@ -15,13 +15,15 @@ namespace OpenMined.Network.Controllers
     {
 
         private SyftController controller;
+        private List<String> experiments;
 
         public Grid(SyftController controller)
         {
             this.controller = controller;
+            experiments = new List<string>();
         }
 
-        public void Run(int inputId, int targetId, List<GridConfiguration> configurations, MonoBehaviour owner)
+        public string Run(int inputId, int targetId, List<GridConfiguration> configurations, MonoBehaviour owner)
         {
             Debug.Log("Grid.Run");
 
@@ -62,7 +64,10 @@ namespace OpenMined.Network.Controllers
             var request = new Request();
             owner.StartCoroutine(request.AddModel(owner, experimentResult.Hash));
 
-            PollNext(owner, request);
+            //PollNext(owner, request);
+
+            experiments.Add(experimentResult.Hash);
+            return experimentResult.Hash;
         }
 
         void PollNext(MonoBehaviour owner, Request request)
@@ -85,7 +90,7 @@ namespace OpenMined.Network.Controllers
             PollNext(owner, request);
         }
 
-        public void TrainModel(MonoBehaviour owner, string input, string target, IpfsJob job, int modelId)
+        public string TrainModel(string input, string target, IpfsJob job, int modelId)
         {
             var tmpInput = Ipfs.Get<JToken>(input);
             var tmpTarget = Ipfs.Get<JToken>(target);
@@ -122,10 +127,13 @@ namespace OpenMined.Network.Controllers
             var response = resultJob.Write(new IpfsJob(seq.GetConfig(), config));
 
             var req = new Request();
+            var owner = Camera.main.GetComponent<SyftServer>();
             owner.StartCoroutine(req.AddWeights(owner, modelId, response.Hash));
+
+            return response.Hash;
         }
 
-        private Sequential CreateSequential(JToken model)
+        public Sequential CreateSequential(JToken model)
         {  
             var seq = new Sequential(controller);
 
