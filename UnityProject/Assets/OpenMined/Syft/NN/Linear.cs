@@ -18,19 +18,6 @@ namespace OpenMined.Syft.Layer
 		
 		public Linear (SyftController _controller, int input, int output, string initializer="Xavier")
 		{
-            initialize(_controller, input, output, initializer);
-		}
-
-        public Linear (SyftController _controller, int input, int output, FloatTensor weights, FloatTensor bias, string initializer="Xavier")
-        {
-            initialize(_controller, input, output, initializer);
-
-            _weights = weights;
-            _bias = bias;
-        }
-
-        private void initialize (SyftController _controller, int input, int output, string initializer = "Xavier")
-        {
             init(this.name);
 
             this.controller = _controller;
@@ -49,6 +36,26 @@ namespace OpenMined.Syft.Layer
             parameters.Add(_bias.Id);
 
 #pragma warning disable 420
+            id = System.Threading.Interlocked.Increment(ref nCreated);
+            controller.addModel(this);
+        }
+
+        public Linear (SyftController _controller, int input, int output, FloatTensor weights, FloatTensor bias, string initializer="Xavier")
+        {
+            init(this.name);
+
+            this.controller = _controller;
+
+            _input = input;
+            _output = output;
+
+            _weights = weights;
+            _bias = bias;
+
+            parameters.Add(_weights.Id);
+            parameters.Add(_bias.Id);
+
+            #pragma warning disable 420
             id = System.Threading.Interlocked.Increment(ref nCreated);
             controller.addModel(this);
         }

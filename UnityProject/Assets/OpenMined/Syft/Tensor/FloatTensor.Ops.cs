@@ -558,7 +558,7 @@ namespace OpenMined.Syft.Tensor
                     factory.ctrl.floatTensorFactory.Get(creator_id).RemoveChild(this.Id);
                 }
                 // Also remove the tensor as a creator of all its children.
-                RemoveAsCreator(this.Id);
+                RemoveAsCreator(this.Idd);
                 factory.ctrl.floatTensorFactory.Delete(this.Id);
             }
         }

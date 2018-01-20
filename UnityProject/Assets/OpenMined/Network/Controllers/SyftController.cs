@@ -15,6 +15,8 @@ using Agent = OpenMined.Syft.NN.RL.Agent;
 using OpenMined.Network.Servers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using OpenMined.Network.Servers.BlockChain.Requests;
+using OpenMined.Network.Servers.BlockChain.Response;
 
 namespace OpenMined.Network.Controllers
 {
@@ -513,24 +515,28 @@ namespace OpenMined.Network.Controllers
                             //         It is written to poll IPFS right now so it
                             //         appears to be working client side.
 
-                            var experiment = Ipfs.Get<IpfsExperiment>("QmVPQnsuks1cCbTMFGqpmHa4M45uUuKRomiqNvJEQAtcRS");
-                            var jobs = experiment.jobs.Select(job => Ipfs.Get<IpfsJob>(job));
-                            var jobResults = jobs.Select(job => this.grid.TrainModel(experiment.input, experiment.target, job, 1));
-
-                            var modelIds = jobResults.Select(r =>
+                            var experiment = Ipfs.Get<IpfsExperiment>(msgObj.experimentId);
+                            var results = experiment.jobs.Select((job) => 
                             {
-                                var job = Ipfs.Get<IpfsJob>(r);
-                                var model = this.grid.CreateSequential(job.Model);
+                                var getResultRequest = new GetResultsRequest(job);
+                                getResultRequest.RunRequestSync();
+                                var responseHash = getResultRequest.GetResponse().resultAddress;
+
+                                // load the model into memory
+                                var modelDefinition = Ipfs.Get<IpfsJob>(responseHash).Model;
+                                var model = this.grid.CreateSequential(modelDefinition);
+
                                 return model.Id;
                             });
 
-                            return modelIds.ToArray().ToString();
+                            var modelIdsString = JsonConvert.SerializeObject(results.ToArray());
+                            return modelIdsString;
                         }
 
                         break;
 				default:
 						break;
-				}
+				}   
 			}
 			catch (Exception e)
 			{

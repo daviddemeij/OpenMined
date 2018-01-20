@@ -254,6 +254,15 @@ void Cos_ (uint3 id: SV_DispatchThreadID) {
     CosData_[id.x] = cos(CosData_[id.x]);
 }
 
+#pragma kernel CosInt
+StructuredBuffer<int> CosIntData;
+RWStructuredBuffer<float> CosIntDataResult;
+
+[numthreads(4,1,1)]
+void CosInt(uint3 id: SV_DispatchThreadID) {
+	CosIntDataResult[id.x] = (float)cos(CosIntData[id.x]);
+}
+
  #pragma kernel Cosh
 
 StructuredBuffer<float> CoshData;

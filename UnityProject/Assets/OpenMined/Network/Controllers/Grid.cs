@@ -8,6 +8,7 @@ using OpenMined.Syft.Layer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OpenMined.UI;
+using OpenMined.Network.Servers.BlockChain;
 
 namespace OpenMined.Network.Controllers
 {
@@ -26,8 +27,6 @@ namespace OpenMined.Network.Controllers
         public string Run(int inputId, int targetId, List<GridConfiguration> configurations, MonoBehaviour owner)
         {
             Debug.Log("Grid.Run");
-
-            string ipfsHash = "";
 
             var inputTensor = controller.floatTensorFactory.Get(inputId);
             var targetTensor = controller.floatTensorFactory.Get(targetId);
@@ -52,48 +51,26 @@ namespace OpenMined.Network.Controllers
 
                 var configJob = new Ipfs();
                 var ipfsJobConfig = new IpfsJobConfig(config.lr);
-                var response = configJob.Write(new IpfsJob(serializedModel, ipfsJobConfig));
+                var response = configJob.Write(new IpfsJob(inputIpfsResponse.Hash, targetIpfsResponse.Hash, serializedModel, ipfsJobConfig));
 
                 jobs[i] = response.Hash;
             }
 
-            var experiment = new IpfsExperiment(inputIpfsResponse.Hash, targetIpfsResponse.Hash, jobs);
+            var experiment = new IpfsExperiment(jobs);
             var experimentWriteJob = new Ipfs();
             var experimentResult = experimentWriteJob.Write(experiment);
 
-            var request = new Request();
-            owner.StartCoroutine(request.AddModel(owner, experimentResult.Hash));
-
-            //PollNext(owner, request);
-
+            BlockChain chain = Camera.main.GetComponent<BlockChain>();
+            owner.StartCoroutine(chain.AddExperiment(experimentResult.Hash, jobs));
             experiments.Add(experimentResult.Hash);
+
             return experimentResult.Hash;
         }
 
-        void PollNext(MonoBehaviour owner, Request request)
+        public string TrainModel(IpfsJob job)
         {
-            owner.StartCoroutine(PollForGrads(owner, request));
-        }
-
-        IEnumerator PollForGrads(MonoBehaviour owner, Request request)
-        {
-            if (request.numModels > 0)
-            {
-                yield return request.GetNumModelGrads(owner, request.numModels);
-            }
-            else
-            {
-                yield return request.GetNumModels(owner);
-            }
-            
-            yield return new WaitForSeconds(20);
-            PollNext(owner, request);
-        }
-
-        public string TrainModel(string input, string target, IpfsJob job, int modelId)
-        {
-            var tmpInput = Ipfs.Get<JToken>(input);
-            var tmpTarget = Ipfs.Get<JToken>(target);
+            var tmpInput = Ipfs.Get<JToken>(job.input);
+            var tmpTarget = Ipfs.Get<JToken>(job.target);
 
             var seq = CreateSequential(job.Model);
 
@@ -124,11 +101,7 @@ namespace OpenMined.Network.Controllers
 
             var resultJob = new Ipfs();
             var config = new IpfsJobConfig(job.config.lr);
-            var response = resultJob.Write(new IpfsJob(seq.GetConfig(), config));
-
-            var req = new Request();
-            var owner = Camera.main.GetComponent<SyftServer>();
-            owner.StartCoroutine(req.AddWeights(owner, modelId, response.Hash));
+            var response = resultJob.Write(new IpfsJob(job.input, job.target, seq.GetConfig(), config));
 
             return response.Hash;
         }
@@ -188,25 +161,25 @@ namespace OpenMined.Network.Controllers
 
     public class IpfsExperiment
     {
-        public string input;
-        public string target;
         public string[] jobs;
 
-        public IpfsExperiment (string input, string target, string[] jobs)
+        public IpfsExperiment (string[] jobs)
         {
-            this.input = input;
-            this.target = target;
             this.jobs = jobs;
         }
     }
 
     public class IpfsJob
     {
+        public string input;
+        public string target;
         public JToken Model;
         public IpfsJobConfig config;
 
-        public IpfsJob (JToken model, IpfsJobConfig config)
+        public IpfsJob (string input, string target, JToken model, IpfsJobConfig config)
         {
+            this.input = input;
+            this.target = target;
             this.Model = model;
             this.config = config;
         }

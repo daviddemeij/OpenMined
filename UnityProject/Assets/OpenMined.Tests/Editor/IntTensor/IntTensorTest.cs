@@ -517,6 +517,25 @@ namespace OpenMined.Tests.Editor.IntTensorTests
             }
         }
 
+        [Test]
+        public void Cos()
+        {
+            int[] data1 = { 30, 60, 90, 180 };
+            int[] shape1 = { 4 };
+            var tensor1 = ctrl.intTensorFactory.Create(_data: data1, _shape: shape1);
+
+            float[] data2 = { 0.1542515f, -0.952413f, -0.4480736f, -0.5984601f };
+            int[] shape2 = { 4 };
+            var expectedCosTensor = ctrl.floatTensorFactory.Create(_data: data2, _shape: shape2);
+
+            var actualCosTensor = tensor1.Cos();
+
+            for (int i = 0; i < actualCosTensor.Size; i++)
+            {
+                Assert.AreEqual(expectedCosTensor[i], actualCosTensor[i], 0.00001f);
+            }
+        }
+
         /* closes class and namespace */
     }
 }

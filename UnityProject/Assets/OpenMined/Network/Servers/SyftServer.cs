@@ -24,12 +24,6 @@ namespace OpenMined.Network.Servers
 			_netMqPublisher.Start();
 
 			controller = new SyftController(shader);
-
-            var experiment = Ipfs.Get<IpfsExperiment>("QmVPQnsuks1cCbTMFGqpmHa4M45uUuKRomiqNvJEQAtcRS");
-            var job = Ipfs.Get<IpfsJob>(experiment.jobs[0]);
-
-            var g = new OpenMined.Network.Controllers.Grid(controller);
-            //g.TrainModel(this, experiment.input, experiment.target, job, 1);
 		}
 
 		private void Update()
