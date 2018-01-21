@@ -45,6 +45,7 @@ namespace OpenMined.Syft.Tensor.Factories
             int[] _data = null,
             ComputeBuffer _dataBuffer = null,
             ComputeBuffer _shapeBuffer = null,
+            ComputeBuffer _stridesBuffer = null,
             ComputeShader _shader = null,
             bool _copyData = true,
             bool _dataOnGpu = false,
@@ -52,7 +53,7 @@ namespace OpenMined.Syft.Tensor.Factories
             bool _keepgrads = false,
             string _creation_op = null)
         {
-            
+            // leave this IF statement - it is used for testing.
             if (ctrl.allow_new_tensors)
             {
                 IntTensor tensor = new IntTensor();
@@ -77,6 +78,7 @@ namespace OpenMined.Syft.Tensor.Factories
             {
                 throw new Exception("Attempted to Create a new IntTensor");
             }
+
             
         }
        
