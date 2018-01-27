@@ -88,11 +88,18 @@ namespace OpenMined.Network.Controllers
             }
 
             var allLoaded = true;
+            float not_loaded = 0f;
+            float loaded = 0f;
             for (var i = 0; i < results.Count(); ++i)
             {
                 if (!results[i])
                 {
                     allLoaded = false;
+                    not_loaded = not_loaded+1;
+                }
+                else
+                {
+                    loaded = loaded+1;
                 }
             }
 
@@ -103,7 +110,7 @@ namespace OpenMined.Network.Controllers
 
             else 
             {
-                response("In progress");
+                response("In progress (" + loaded.ToString() + "/" + (loaded+not_loaded).ToString() + " models are done)");
             }
 
 
