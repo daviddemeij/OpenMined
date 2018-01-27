@@ -88,8 +88,8 @@ namespace OpenMined.Network.Controllers
             }
 
             var allLoaded = true;
-            float not_loaded = 0f;
-            float loaded = 0f;
+            int not_loaded = 0;
+            int loaded = 0;
             for (var i = 0; i < results.Count(); ++i)
             {
                 if (!results[i])
